@@ -4,9 +4,9 @@
 
 Heavy in development.
 
-- [ ] Log all data.table queries in R session memory in separate environment.  
-- [ ] `read.only` attribute for data.table.  
-- [ ] Measure timing of each query in chain.  
+- Log all data.table queries in R session memory in separate environment.  
+- `read.only` attribute for data.table.  
+- Measure timing of each query in chain.  
 
 ## Installation
 
@@ -17,7 +17,7 @@ install_github("jangorecki/dtq")
 
 ## Usage
 
-Read [vignette]()  
+Read [vignette](vignettes/dtq.Rmd)  
 
 ## License
 
