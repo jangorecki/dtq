@@ -1,45 +1,60 @@
+---
+title: "data.table query"
+date: "`r Sys.Date()`"
+output:
+  rmarkdown::html_document
+vignette: >
+  %\VignetteIndexEntry{dtq}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\usepackage[utf8]{inputenc}
+---
 
-## Queries logging
+Package provides mainly the auditing feature for data.table queries.  
+All the data.table queries are logged in R session memory.  
 
-```{r}
-# options("dtq.log"=TRUE) # default
-dt <- data.table(a=rep(1:4),b=rep(letters[1:2],2))
-dt[a < 100L, .(a,b)
+```{r, echo = FALSE, message = FALSE}
+knitr::opts_chunk$set(
+  comment = "#",
+  error = FALSE,
+  tidy = FALSE,
+  cache = FALSE,
+  collapse = TRUE)
+```
+
+## Log query details
+
+```{r dtl, message=FALSE}
+library(dtq)
+DT <- data.table(a=rep(1:4), b=rep(letters[1:2],2))
+
+# make some data.table queries
+DT[a < 100L, .(a,b)
    ][i = b %in% c(letters[1:2]), mean_a_by_b := mean(a), b
      ][, c("a5","ab5") := lapply(.SD, `+`, 5L), .SDcols = -c("b")
        ][]
-dt[, by = .(b), lapply(.SD,sum), .SDcols=c("a")
+DT[, by = .(b), lapply(.SD,sum), .SDcols=c("a")
    ][b %in% c("a","b"), mean(a)]
 
-dt <- dtt() # dtt(purge=TRUE)
-options("dtq.log"=FALSE)
-
-dt
-dt[, c(.SD, rbindlist(lapply(dtq, function(x) x$process())))]
-dt[, c(.SD, rbindlist(lapply(dtq, function(x) x$process(chain=TRUE))))]
-
-# compact
-dt[, c(.SD, rbindlist(lapply(dtq, function(x) x$process())))
-   ][, .(dtq_depth = dtq_seq[.N],
-         timestamp = timestamp[.N],
-         env = env[.N],
-         elapsed = sum(elapsed),
-         query = paste(query,collapse="")),
-     .(dtq_id)]
-
-dtt(chain.only=TRUE)
+# print queries log
+dt <- dtl()
+knitr::kable(subset(dt, select = -dtq))
+dt <- dtl(chain=TRUE)
+knitr::kable(dt)
 ```
 
-
-## Read-only data.table
+## Set data.table read-only
 
 ```{r read_only}
-dt <- data.table(a = 1L)
-dt[, a := 2L]
-print(dt)
+dtl(purge=TRUE)
+
+DT <- data.table(a = 1L)
+DT[, a := 2L]
+print(DT)
   
-dt <- data.table(a = 1L)
-setattr(dt,"read.only",TRUE)
-dt[, a := 2L]
-print(dt)
+DT <- data.table(a = 1L)
+setattr(DT,"read.only",TRUE)
+DT[, a := 2L]
+print(DT)
+
+knitr::kable(subset(dtl(), select = -dtq))
 ```

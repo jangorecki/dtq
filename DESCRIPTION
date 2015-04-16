@@ -1,11 +1,11 @@
 Package: dtq
 Type: Package
 Title: data.table query
-Version: 0.1
-Date: 2015-03-25
+Version: 0.1.8
+Date: 2015-04-16
 Author: Jan Gorecki
 Maintainer: Jan Gorecki <J.Gorecki@wit.edu.pl>
-Description: Logging data.table queries, read-only featre.
+Description: Logging data.table queries, read-only feature.
 License: GPL-3
 Depends:
   data.table
@@ -13,4 +13,6 @@ Imports:
   R6
 Suggests:
   microbenchmark,
-  testthat
+  testthat,
+  knitr
+VignetteBuilder: knitr

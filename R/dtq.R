@@ -5,35 +5,26 @@
 #' @name dtq-package
 NULL
 
-#' @title Prepare and call append log to cache
-#' @param te environment
-#' @param dtcall call
-#' @param pt numeric
-append.log <- function(te, dtcall, pt){
-  # finish timing
-  et <- if(isTRUE(getOption("dtq.log.nano")) && requireNamespace("microbenchmark",quietly=TRUE)) microbenchmark::get_nanotime()*1e-9 else proc.time()[[3L]]
-  # insert
-  dtq.log$add(list(timestamp = Sys.time(), env = environmentName(te), dtcall = list(dtcall), elapsed = et - pt))
-}
-
 #' @title Get data.table queries logs
-#' @param chain.only logical if \emph{TRUE} then aggregated logs to full chains
-#' @param purge logical when true will clear cache and return empty data.table
+#' @param chain logical if \emph{TRUE} then aggregated logs to full chains
+#' @param purge logical when \emph{TRUE} it will clear dtq logs and return empty data.table
 #' @export
-dtt <- function(chain.only = FALSE, purge = FALSE){
-  if(isTRUE(purge)) dtq.log$purge()
+dtl <- function(chain = FALSE, purge = FALSE){
+  env <- dtq_id <- . <- query <- elapsed <- nrow_in <- nrow_out <- NULL
+  if(isTRUE(purge)) return(invisible(dtq.log$purge()))
   dt <- dtq.log$print()
-  if(isTRUE(chain.only)){
-    dt[, c(.SD, rbindlist(lapply(dtq, function(x) x$process())))
-       ][, .(dtq_depth = dtq_seq[.N],
-             timestamp = timestamp[.N],
-             env = env[.N],
-             elapsed = sum(elapsed),
-             query = paste(query,collapse="")),
-         .(dtq_id)]
+  if(isTRUE(chain)){
+    dt[,.(chain_depth=.N, chain=paste(query,collapse=""), timestamp=timestamp[1L], elapsed=sum(elapsed), nrow_in=nrow_in[1L], nrow_out=nrow_out[.N]), .(dtq_id,env)]
   } else dt
 }
 
+#' @title data.table queries log storage
+#' @docType class
+#' @format An R6 class object.
+#' @name dtq.log
+#' @details Environment to store data.table queries, use \link{dtl} to access formatted logs.
+#' @seealso \link{dtl}
+#' @export
 dtq.log <- R6Class(
   classname = "dtq.log",
   public = list(
@@ -60,16 +51,17 @@ dtq.log <- R6Class(
         ][, seq := seq_len(.N)
           ][, dtq := lapply(dtcall, function(x) dtq$new(x, env)) # add: dtq$new()$print ad return multiple columns in one batch as a result of print/process
             ][, dtq_seq := sapply(dtq, function(x) x$depth())
-              ][, dtq_id := cumsum(dtq_seq==1L)
-                ][, .(seq, dtq_id, dtq_seq, dtq, timestamp, env, elapsed)
-                  ][]
+              ][, query := unlist(lapply(dtq, function(x) x$process()))
+                ][, dtq_id := cumsum(dtq_seq==1L)
+                  ][, .(seq, dtq_id, dtq_seq, dtq, query, timestamp, env, elapsed, nrow_in, nrow_out)
+                    ][]
     },
     print = function(){
       self$process()
     }
   ),
   active = list(
-    empty = function() data.table(seq=integer(), dtq_id=integer(), dtq_seq=integer(), dtq=list(), timestamp=Sys.time()[-1L], env=character(), elapsed=numeric())
+    empty = function() data.table(seq=integer(), dtq_id=integer(), dtq_seq=integer(), dtq=list(), query=character(), timestamp=Sys.time()[-1L], env=character(), elapsed=numeric(), nrow_in=integer(), nrow_out=integer())
   ))
 
 #' @title data.table query
@@ -147,11 +139,9 @@ dtq <- R6Class(
     process = function(chain = FALSE){
       if(isTRUE(chain)){
         # return list(query = [...], chain = [...][...][...])
-        x <- unlist(self$qapply(self$deparse))
-        data.table(query = x[1L], chain = paste(x,collapse=""))
+        paste(unlist(self$qapply(self$deparse)),collapse="")
       } else {
-        x <- self$deparse(self$query)
-        data.table(query = x)
+        self$deparse(self$query)
       }
     },
     print = function(){
@@ -160,8 +150,5 @@ dtq <- R6Class(
     exec = function(){
       eval(self$recall(self$query), envir = asNamespace(env))
     }
-  ),
-  active = list(
-    empty = function() data.table(query = character(), dtq = list())
   )
 )

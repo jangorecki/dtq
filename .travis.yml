@@ -4,6 +4,7 @@ r_packages:
  - R6
  - testthat
  - microbenchmark
+ - knitr
 
 r_github_packages:
  - Rdatatable/data.table
