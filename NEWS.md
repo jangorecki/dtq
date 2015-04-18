@@ -7,7 +7,6 @@
 
 - [x] rename function dtt to dtl
 - [x] log data.table query in rows
-- [x] `read.only` attribute for data.table
 
 
 # dtq 0.1.0
