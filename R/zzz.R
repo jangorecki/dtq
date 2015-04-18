@@ -5,25 +5,23 @@
   expr <- expression({
     # dtq logging
     if(isTRUE(getOption("dtq.log"))){
-      te <- topenv(parent.frame(1))
-      if(!isNamespace(te) || !(getNamespaceName(te) %in% c("data.table", getOption("dtq.log.exclude")))){
+      .dtq.te <- topenv(parent.frame(1))
+      if(!isNamespace(.dtq.te) || !(getNamespaceName(.dtq.te) %in% c("data.table", getOption("dtq.log.exclude")))){
         # custom defined pkgs for which exclude log, as character vector
-        dtcall <- sys.call() # data.table query
-        nrow_in <- nrow(x)
+        .dtq.dtcall <- sys.call() # data.table query
+        .dtq.nrow_in <- nrow(x)
         if(isTRUE(getOption("dtq.log.gc"))) gc(FALSE)
-        pt <- if(isTRUE(getOption("dtq.log.nano")) && requireNamespace("microbenchmark", quietly=TRUE)) microbenchmark::get_nanotime()*1e-9 else proc.time()[[3L]]
-        eval(bquote( # bquote prevent to overwride vars (pt, te, nrow_in) during `[.data.table` execution
-          on.exit({
-            dtq::dtq.log$add(
-              list(timestamp = Sys.time(),
-                   env = .(environmentName(te)),
-                   dtcall = .(list(dtcall)),
-                   elapsed = (if(isTRUE(getOption("dtq.log.nano"))) microbenchmark::get_nanotime()*1e-9 else proc.time()[[3L]]) - .(pt),
-                   nrow_in = .(nrow_in),
-                   nrow_out = NA_integer_)
-            )
-          })
-        ))
+        .dtq.pt <- if(isTRUE(getOption("dtq.log.nano")) && requireNamespace("microbenchmark", quietly=TRUE)) microbenchmark::get_nanotime()*1e-9 else proc.time()[[3L]]
+        on.exit(
+          dtq::dtq.log$add(
+            list(timestamp = Sys.time(),
+                 env = environmentName(.dtq.te),
+                 dtcall = list(.dtq.dtcall),
+                 elapsed = (if(isTRUE(getOption("dtq.log.nano")) && requireNamespace("microbenchmark", quietly=TRUE)) microbenchmark::get_nanotime()*1e-9 else proc.time()[[3L]]) - .dtq.pt,
+                 nrow_in = .dtq.nrow_in,
+                 nrow_out = as.integer(nrow(returnValue()))[1L])
+          )
+        )
       }
     }
     # read.only mode
@@ -45,10 +43,10 @@
   
   # logging related opts
   
-  options("dtq.log" = TRUE) # turn off logging here
+  options("dtq.log" = TRUE) # turn on logging
   options("dtq.log.size" = 1e5L) # when log reach that num it stop logging and start throwing warnings
   options("dtq.log.gc" = FALSE) # do gc() before each timing
-  options("dtq.log.nano" = requireNamespace("microbenchmark", quietly=TRUE)) # if microbenchmark available it will use get_nanotime
+  options("dtq.log.nano" = TRUE) # if microbenchmark available it will use get_nanotime
   options("dtq.log.exclude" = c("dtq","dwtools","logR")) # packages to exclude
   
   # chain processing opts

@@ -1,8 +1,12 @@
+# dtq 0.1.9
+
+- [x] log data.table query out rows
+
+
 # dtq 0.1.8
 
 - [x] rename function dtt to dtl
 - [x] log data.table query in rows
-- [ ] log data.table query out rows (experimental, soon)
 - [x] `read.only` attribute for data.table
 
 

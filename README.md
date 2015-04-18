@@ -1,6 +1,6 @@
 # data.table query [![Build Status](https://travis-ci.org/jangorecki/dtq.svg?branch=master)](https://travis-ci.org/jangorecki/dtq)
 
-**Current version:** [0.1.8](NEWS.md)  
+**Current version:** [0.1.9](NEWS.md)  
 
 - [x] log data.table query details
   - [x] call
@@ -8,13 +8,14 @@
   - [x] environment
   - [x] timing
   - [x] in rows
-  - [ ] out rows (experimental, soon)
+  - [x] out rows
 - [x] `read.only` attribute for data.table
 
 ## Installation
 
 ```r
 library(devtools)
+stopifnot(getRversion() >= "3.2.0")
 install_github("jangorecki/dtq")
 ```
 
