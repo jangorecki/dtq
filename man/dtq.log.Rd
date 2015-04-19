@@ -15,7 +15,7 @@ data.table queries log storage
 Environment to store data.table queries, use \link{dtl} to access formatted logs.
 }
 \seealso{
-\link{dtl}
+\link{dtl}, \link{dtq}
 }
 \keyword{datasets}
 

@@ -14,4 +14,7 @@ dtl(chain = FALSE, purge = FALSE)
 \description{
 Get data.table queries logs
 }
+\details{
+\emph{timestamp} represents the time of query (or chain) log after it is evaluated.
+}
 

@@ -11,5 +11,14 @@ dtq
 \description{
 data.table query
 }
+\details{
+Following fields are created during initialization
+\itemize{
+\item{call} call, includes nested preceding calls in chain
+\item{env} character, top environment of the parent frame from where call was called
+\item{query} list of language objects, one per query in chain, still recursively nested
+}
+Calls are stored in argument non-matched form. They are later matched when transforming into non-language output. So user can access calls as they were called without argument matching applied.
+}
 \keyword{datasets}
 

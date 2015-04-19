@@ -1,6 +1,14 @@
 # dtq 0.1.9
 
+- [x] new dependency R 3.2.0
 - [x] log data.table query out rows
+- [x] internal logging improvements
+- [x] in/out rows column names changed
+- [x] more options to log specific packages
+- [x] bug fixes
+- [x] removed some in-dev dtq methods
+- [ ] a lot test scenarios
+- [ ] log source data.table name
 
 
 # dtq 0.1.8

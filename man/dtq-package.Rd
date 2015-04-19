@@ -5,7 +5,7 @@
 \alias{dtq-package}
 \title{dtq-package}
 \description{
-dtq-package
+After loading package by default it start to log data.table queries and their processing details, logs can be accessed by \link{dtl} function.
 }
 \author{
 Jan Gorecki

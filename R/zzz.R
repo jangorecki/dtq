@@ -5,21 +5,22 @@
   expr <- expression({
     # dtq logging
     if(isTRUE(getOption("dtq.log"))){
-      .dtq.te <- topenv(parent.frame(1))
-      if(!isNamespace(.dtq.te) || !(getNamespaceName(.dtq.te) %in% c("data.table", getOption("dtq.log.exclude")))){
-        # custom defined pkgs for which exclude log, as character vector
-        .dtq.dtcall <- sys.call() # data.table query
-        .dtq.nrow_in <- nrow(x)
-        if(isTRUE(getOption("dtq.log.gc"))) gc(FALSE)
-        .dtq.pt <- if(isTRUE(getOption("dtq.log.nano")) && requireNamespace("microbenchmark", quietly=TRUE)) microbenchmark::get_nanotime()*1e-9 else proc.time()[[3L]]
+      te <- topenv(parent.frame(1))
+      if(dtq::do.dtq.log(te)){
+        dtcall <- sys.call() # data.table query
+        dtq.local.log <- local({
+          env <- environmentName(te)
+          dtcall <- list(dtcall)
+          in_rows <- nrow(x)
+          if(isTRUE(getOption("dtq.log.gc"))) gc(FALSE)
+          start <- if(isTRUE(getOption("dtq.log.nano")) && requireNamespace("microbenchmark", quietly=TRUE)) microbenchmark::get_nanotime()*1e-9 else proc.time()[[3L]]
+          function(timestamp, end, out_rows) dtq::dtq.log$add(list(timestamp = timestamp, env = env, dtcall = dtcall, elapsed = end - start, in_rows = in_rows, out_rows = out_rows))
+        })
         on.exit(
-          dtq::dtq.log$add(
-            list(timestamp = Sys.time(),
-                 env = environmentName(.dtq.te),
-                 dtcall = list(.dtq.dtcall),
-                 elapsed = (if(isTRUE(getOption("dtq.log.nano")) && requireNamespace("microbenchmark", quietly=TRUE)) microbenchmark::get_nanotime()*1e-9 else proc.time()[[3L]]) - .dtq.pt,
-                 nrow_in = .dtq.nrow_in,
-                 nrow_out = as.integer(nrow(returnValue()))[1L])
+          dtq.local.log(
+            timestamp = Sys.time(),
+            end = if(isTRUE(getOption("dtq.log.nano")) && requireNamespace("microbenchmark", quietly=TRUE)) microbenchmark::get_nanotime()*1e-9 else proc.time()[[3L]],
+            out_rows = as.integer(nrow(returnValue()))[1L]
           )
         )
       }
@@ -47,12 +48,12 @@
   options("dtq.log.size" = 1e5L) # when log reach that num it stop logging and start throwing warnings
   options("dtq.log.gc" = FALSE) # do gc() before each timing
   options("dtq.log.nano" = TRUE) # if microbenchmark available it will use get_nanotime
-  options("dtq.log.exclude" = c("dtq","dwtools","logR")) # packages to exclude
+  options("dtq.log.exclude" = character()) # packages to exclude
+  options("dtq.log.include" = character()) # packages to include
   
-  # chain processing opts
+  # dtq processing opts
   
   options("dtq.apply.depth" = 20L)
-  options("dtq.arg.names" = FALSE)
     
 }
 

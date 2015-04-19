@@ -9,13 +9,14 @@
   - [x] timing
   - [x] in rows
   - [x] out rows
+- [x] control query logging environments
 - [x] `read.only` attribute for data.table
 
 ## Installation
 
 ```r
-library(devtools)
 stopifnot(getRversion() >= "3.2.0")
+library(devtools)
 install_github("jangorecki/dtq")
 ```
 
@@ -33,6 +34,15 @@ LKP[DT2, .(b, a, adj2_a = adj_a * ratio)]
 dtl()
 dtl(chain=TRUE)
 ```
+
+Control logging by global options:
+
+- `dtq.log.exclude` character, exclude queries from provided packages
+- `dtq.log.include` character, log queries only from provided packages
+
+Unless `dtq.log.include` option is set the logging is active for all data.table queries excluding calls from `data.table` and `dtq` packages.  
+Otherwise only queries from provided packages will be logged, still excluding packages from `dtq.log.exclude` option.  
+While using *include* option character `R_GlobalEnv` can be provided to log also calls from global env.  
 
 ## License
 
