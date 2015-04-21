@@ -2,7 +2,12 @@ context("dtq.log")
 
 test_that("dtq.log basics", {
   
-  log_fields <- c("timestamp", "env", "dtcall", "elapsed", "in_rows", "out_rows")
+  options("dtq.log"=FALSE)
+  dtl(purge = TRUE)
+  DT <- data.table(a = 1:10, b = letters[1:5])
+  DT[,.(a,b)]
+  expect_identical(dtq.log$length(), 0L, info="dtq.log=FALSE option works")
+  options("dtq.log"=TRUE)
   
   dtl(purge = TRUE)
   DT <- data.table(a = 1:10, b = letters[1:5])
@@ -10,9 +15,9 @@ test_that("dtq.log basics", {
   DT2 <- DT[, .(a = sum(a)), b
             ][a > median(a), .(b, a, adj_a = a * 1.1)]
   LKP[DT2, .(b, a, adj2_a = adj_a * ratio)]
-  
   expect_identical(length(dtq.log$log), dtq.log$length(), info="dtq.log$length method")
   expect_identical(dtq.log$length(), 3L, info="number of calls")
+  log_fields <- c("timestamp", "env", "dtcall", "elapsed", "in_rows", "out_rows")
   expect_true(all(sapply(dtq.log$log, function(x) identical(names(x), log_fields))), info="all logs contains full set of fields")
   
 })
@@ -86,13 +91,36 @@ test_that("dtq.log process method", {
   dt <- dtq.log$process()
   expect_identical(dt[,.N,.(dtq_id)][,N], c(2L,1L,3L), info="queries within sequence")
   
+  dtl(purge=TRUE)
+  DT1 <- data.table(a=1:3, b=letters[1:3], key="a")
+  DT2 <- data.table(a=1:3, z=rnorm(3))
+  DT1[DT2[,.(z=sum(z)),,a]]
+  expect_identical(dtq.log$length(), 2L, info="join with nested subset")
+  
+  dtl(purge=TRUE)
+  DT <- data.table(a=1:10, b=1:5)
+  DT[,.(.I, .N, GRP = .GRP), b][, head(.SD,1L), GRP]
+  expect_identical(dtq.log$process()$query, c("[j = .(.I, .N, GRP = .GRP), by = b]","[j = head(.SD, 1L), by = GRP]"), info="usage of .I, .N, .GRP, .SD")
+  
+  dtl(purge = TRUE)
+  DT <- data.table(a = 1:10, b = letters[1:5])
+  DT[keyby=b,,.(a=sum(a))]
+  expect_identical(dtq.log$process()[1L]$query, "[j = .(a = sum(a)), keyby = b]", info="reordered input to `[`")
+  
+  dtl(purge = TRUE)
+  DT <- data.table(a = 1:10, b = letters[1:5])
+  DT[,.(a,b)][,.(a,b)]
+  options("dtq.apply.depth"=1L)
+  expect_error(dtq.log$process(), info="dtq.apply.depth option")
+  options("dtq.apply.depth"=20L)
+  
 })
 
-test_that("dtq.log TO DO", {
+test_that("dtq.log timing", {
   
-  expect_identical(FALSE, FALSE, info="timing correct for Sys.sleep case")
-  expect_identical(FALSE, FALSE, info="reordered input to `[`")
-  expect_identical(FALSE, FALSE, info="dtq.log=FALSE option works")
-  expect_identical(FALSE, FALSE, info="dtq.apply.depth option works")
+  dtl(purge=TRUE)
+  DT <- data.table(a=1:10, b=1:5)
+  DT[,{Sys.sleep(0.16); .(a = sum(a))}]
+  expect_true(dtq.log$log[[1L]]$elapsed > 0.15, info="timing correct for Sys.sleep case")
   
 })

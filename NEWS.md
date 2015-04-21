@@ -7,7 +7,7 @@
 - [x] more options to log specific packages
 - [x] bug fixes
 - [x] removed some in-dev dtq methods
-- [ ] a lot test scenarios
+- [x] a lot test scenarios
 - [ ] log source data.table name
 
 
