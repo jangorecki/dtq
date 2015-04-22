@@ -22,7 +22,7 @@ install_github("jangorecki/dtq")
 
 ## Usage
 
-See [vignette](https://rawgit.com/jangorecki/9153d1e81195d10d7e5c/raw/dcbb5b5713186968eb024175d4a255b653228f9a/dtq.html).  
+See [vignette](https://rawgit.com/jangorecki/b917a9f9a33fb98b714d/raw/e9faba249019228f3b389e8bb3b50cca14ce8a53/dtq.html).  
 
 ```r
 library(dtq)

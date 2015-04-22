@@ -25,19 +25,35 @@ knitr::opts_chunk$set(
 
 ```{r dtl, message=FALSE}
 library(dtq)
-DT <- data.table(a=rep(1:4), b=rep(letters[1:2],2))
 
-# make some data.table queries
-DT[a < 100L, .(a,b)
-   ][i = b %in% c(letters[1:2]), mean_a_by_b := mean(a), b
-     ][, c("a5","ab5") := lapply(.SD, `+`, 5L), .SDcols = -c("b")
-       ][]
-DT[, by = .(b), lapply(.SD,sum), .SDcols=c("a")
-   ][b %in% c("a","b"), mean(a)]
+# populate data
+N=2e6; K=100
+set.seed(1)
+DT <- data.table(
+  id1 = sample(sprintf("id%03d",1:K), N, TRUE),
+  id2 = sample(sprintf("id%03d",1:K), N, TRUE),
+  id3 = sample(sprintf("id%010d",1:(N/K)), N, TRUE),
+  v1 =  sample(5, N, TRUE)
+)
+
+# single queries aggregations
+r <- DT[, sum(v1), keyby=.(id1, id2)]
+r <- DT[, lapply(.SD, mean), keyby=id3, .SDcols="v1"]
+
+# single queries filtering
+r <- DT[id1 %like% "id02"]
+r <- DT[id1=="id027"]
+
+# query chain
+r <- DT[, .(v1=sum(v1)), .(id1, id2, id3)
+        ][, .(v1=sum(v1)), .(id1, id2)
+          ][, .(v1=sum(v1)), .(id1)
+            ][, .(v1=sum(v1))]
 
 # print queries log
 dt <- dtl()
 knitr::kable(subset(dt, select = -dtq))
+# print queries log aggregated to chains
 dt <- dtl(chain=TRUE)
 knitr::kable(dt)
 ```
