@@ -7,18 +7,22 @@
 NULL
 
 #' @title Get data.table queries logs
+#' @param print logical if \emph{TRUE} then will remove \emph{list} type columns from the result.
 #' @param chain logical if \emph{TRUE} then aggregated logs to full chains
 #' @param purge logical when \emph{TRUE} it will clear dtq logs and return empty data.table
 #' @details \emph{timestamp} represents the time of query (or chain) log after it is evaluated.
 #' @export
-dtl <- function(chain = FALSE, purge = FALSE){
+dtl <- function(print = FALSE, chain = FALSE, purge = FALSE){
   env <- dtq_id <- . <- query <- elapsed <- in_rows <- out_rows <- NULL
   if(isTRUE(purge)) return(invisible(dtq.log$purge()))
   dt <- dtq.log$process()
-  if(isTRUE(chain)){
+  if(!isTRUE(chain)){
+    if(isTRUE(print)) dt <- dt[, .SD, .SDcols=-c("dtq","dtq_call")]
+  }
+  else if(isTRUE(chain)){
     dt <- dt[,.(dtq_depth=.N, query=paste(query,collapse=""), timestamp=timestamp[.N], elapsed=sum(elapsed), in_rows=in_rows[1L], out_rows=out_rows[.N]), .(dtq_id,env)]
   }
-  dt
+  return(dt)
 }
 
 #' @title Check if proceed with dtq logging
@@ -80,11 +84,11 @@ dtq.log <- R6Class(
       if(self$length() < 1L) return(self$empty)
       rbindlist(self$log)[
         ][, seq := seq_len(.N)
-          ][, dtq := list(mapply(function(x, env) dtq$new(x, env), dtcall, env, SIMPLIFY = FALSE))
+          ][, dtq := list(mapply(dtq$new, dtq_call, env, SIMPLIFY = FALSE)) # using lower granularity class because it recursively match.calls in the chain and allow to get depth
             ][, dtq_seq := sapply(dtq, function(x) x$depth())
-              ][, query := sapply(dtq, function(x) x$process())
+              ][, query := unlist(deparse.dtq.call(dtq_call))
                 ][, dtq_id := cumsum(dtq_seq==1L)
-                  ][, .(seq, dtq_id, dtq_seq, dtq, query, timestamp, env, elapsed, in_rows, out_rows)
+                  ][, .(seq, dtq_id, dtq_seq, dtq, dtq_call, query, timestamp, env, elapsed, in_rows, out_rows)
                     ][]
     },
     print = function(){
@@ -140,19 +144,8 @@ dtq <- R6Class(
       }
       stop(paste0("dtq depth recursive call limit exceeded, current limit ",apply.depth,", use: options('dtq.apply.depth')"))
     }, # dtq depth
-    deparse = function(query){
-      query <- as.list(match.call(definition = data.table:::`[.data.table`, call = as.call(query)))
-      args <- query[-c(1L,2L)] # exclude 'x' argument
-      argnames.list <- lapply(names(args), function(x) x[nchar(x)>0L]) # just to easy collapse below
-      arg.queries <- vapply(seq_along(args), function(i) paste(c(argnames.list[[i]],paste(deparse(args[[i]], width.cutoff=500L),collapse="\n")),collapse=" = "), "", USE.NAMES=FALSE)
-      paste0("[",paste(arg.queries,collapse=", "),"]")
-    },
-    process = function(){
-      if(self$length() < 1L) return(self$na)
-      self$deparse(self$query)
-    },
     print = function(){
-      print(self$process())
+      # print(deparse.dtq.call(self$call))
       invisible(self)
     }
   ),
@@ -162,7 +155,78 @@ dtq <- R6Class(
   )
 )
 
-# is.dtq.call <- function(x){
-#   is.call(x) && (x[[1L]]==as.name("[") || x[[1L]]==as.name("[.data.table")) mx <- as.list(match.call(match.fun(data.table:::`[.data.table`), x)) else return(x)
-#   } else return(x)
-# }
+# -----------------------------------------------------------------
+
+#' @title is.dtq.call
+#' @param x call or list of calls
+#' @return logical scalar or list of logical scalars
+is.dtq.call <- function(x){
+  is.dtq.call.scalar <- function(x){
+    if(!is.call(x)) return(FALSE)
+    x[[1L]]==as.name("[.data.table")
+  }
+  if(is.call(x)) is.dtq.call.scalar(x)
+  else if(is.list(x)) lapply(x, is.dtq.call.scalar)
+  else if(!is.list(x)) FALSE
+}
+
+#' @title match.dtq.call
+#' @param x call or list of calls, valid data.table query call
+#' @seealso \link{is.dtq.call}
+#' @note currently not used during processing as dtq catches already matched call, but can be utilized in case of any other catched dtq
+#' @return the same call(s) but with matched arguments
+match.dtq.call <- function(x){
+  match.dtq.call.scalar <- function(x){
+    match.call(match.fun(get("[.data.table", envir=asNamespace("data.table"), inherits=FALSE)), x, expand.dots = TRUE, envir = parent.frame(1))
+  }
+  if(is.call(x)) match.dtq.call.scalar(x)
+  else if(is.list(x)) lapply(x, match.dtq.call.scalar)
+  else if(!is.list(x)) stop("match.dtq.call accepts call or list only")
+}
+
+#' @title deparse argument names and their values
+#' @param args.names character
+#' @param args language objects
+#' @return character
+deparse_and_paste_arg <- function(args.names, args){
+  paste(c(args.names, paste(deparse(args[[args.names]], width.cutoff=500L), collapse="\n")), collapse=" = ")
+}
+
+#' @title deparse data.table query call
+#' @param x list of calls
+#' @return list of character
+deparse.dtq.call <- function(x){
+  decall.list <- lapply(ifelse(is.dtq.call(x), match.dtq.call(x),x), as.list)
+  args.list <- lapply(decall.list, `[`, -c(1L,2L)) # exclude '[' and x' elements
+  query.list <- lapply(args.list, function(args) vapply(names(args), deparse_and_paste_arg, "", args, USE.NAMES=FALSE))
+  lapply(query.list, function(query) paste0("[",paste(query,collapse=", "),"]"))
+}
+
+#' @title dtq depth
+#' @param x list of calls
+#' @param apply.depth integer limit of recursive call in chain
+#' @return depth of tested queries in chain, points to the `src` object.
+#' @note Currently not used, process in using `dtq` class object `depth` method because dtq class store calls casted to recursive lists of calls. Calls are matched to `[.data.table` and that makes `depth` function catch more cases.
+depth.dtq.call <- function(x, apply.depth = getOption("dtq.apply.depth",20L)){
+  depth.dtq.call.scalar <- function(x){
+    for(i.depth in (seq_len(apply.depth)-1L)){ # i.depth <- 0L
+      if(i.depth == 0L){
+        if(!is.dtq.call(x)) return(i.depth) # 0L
+        else if(is.dtq.call(x[[2L]])) next()
+        else return(i.depth+1L)
+      }
+      else if(i.depth > 0L){
+        if(!is.dtq.call(x[[rep(2L,i.depth)]])) return(i.depth-1L) # 0L
+        if(is.dtq.call(x[[rep(2L,i.depth)]])){
+          if(is.call(x[[rep(2L,i.depth)]][2L])) next()
+          return(i.depth)
+        }
+        next()
+      }
+    }
+    stop(paste0("dtq depth recursive call limit exceeded, current limit ",apply.depth,", use: options('dtq.apply.depth')"))
+  }
+  if(is.call(x)) depth.dtq.call.scalar(x)
+  else if(is.list(x)) lapply(x, depth.dtq.call.scalar)
+  else if(!is.list(x)) stop("depth.dtq.call accepts call or list only")
+}

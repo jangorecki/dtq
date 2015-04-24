@@ -4,9 +4,11 @@
 \alias{dtl}
 \title{Get data.table queries logs}
 \usage{
-dtl(chain = FALSE, purge = FALSE)
+dtl(print = FALSE, chain = FALSE, purge = FALSE)
 }
 \arguments{
+\item{print}{logical if \emph{TRUE} then will remove \emph{list} type columns from the result.}
+
 \item{chain}{logical if \emph{TRUE} then aggregated logs to full chains}
 
 \item{purge}{logical when \emph{TRUE} it will clear dtq logs and return empty data.table}

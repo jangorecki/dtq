@@ -1,5 +1,22 @@
 .onLoad <- function(libname, pkgname){
   
+  # logging related opts
+  
+  options("dtq.log" = TRUE) # turn on logging
+  options("dtq.log.size" = 1e5L) # when log reach that num it stop logging and start throwing warnings
+  options("dtq.log.gc" = FALSE) # do gc() before each timing
+  options("dtq.log.nano" = TRUE) # if microbenchmark available it will use get_nanotime
+  options("dtq.log.exclude" = character()) # packages to exclude
+  options("dtq.log.include" = character()) # packages to include
+  
+  # dtq processing opts
+  
+  options("dtq.apply.depth" = 20L)
+    
+}
+
+.onAttach <- function(libname, pkgname){
+  
   # inject dtq logging and read.only to data.table:::`[.data.table`
   # based on: data.table:::`.onLoad`
   expr <- expression({
@@ -7,14 +24,14 @@
     if(isTRUE(getOption("dtq.log"))){
       te <- topenv(parent.frame(1))
       if(dtq::do.dtq.log(te)){
-        dtcall <- sys.call() # data.table query
+        dtq_call <- match.call() # data.table query
         dtq.local.log <- local({
           env <- environmentName(te)
-          dtcall <- list(dtcall)
+          dtq_call <- list(dtq_call)
           in_rows <- nrow(x)
           if(isTRUE(getOption("dtq.log.gc"))) gc(FALSE)
           start <- if(isTRUE(getOption("dtq.log.nano")) && requireNamespace("microbenchmark", quietly=TRUE)) microbenchmark::get_nanotime()*1e-9 else proc.time()[[3L]]
-          function(timestamp, end, out_rows) dtq::dtq.log$add(list(timestamp = timestamp, env = env, dtcall = dtcall, elapsed = end - start, in_rows = in_rows, out_rows = out_rows))
+          function(timestamp, end, out_rows) dtq::dtq.log$add(list(timestamp = timestamp, env = env, dtq_call = dtq_call, elapsed = end - start, in_rows = in_rows, out_rows = out_rows))
         })
         on.exit(
           dtq.local.log(
@@ -42,19 +59,6 @@
   lockBinding("[.data.table", asNamespace("data.table"))
   rm(expr, tt, ss)
   
-  # logging related opts
-  
-  options("dtq.log" = TRUE) # turn on logging
-  options("dtq.log.size" = 1e5L) # when log reach that num it stop logging and start throwing warnings
-  options("dtq.log.gc" = FALSE) # do gc() before each timing
-  options("dtq.log.nano" = TRUE) # if microbenchmark available it will use get_nanotime
-  options("dtq.log.exclude" = character()) # packages to exclude
-  options("dtq.log.include" = character()) # packages to include
-  
-  # dtq processing opts
-  
-  options("dtq.apply.depth" = 20L)
-    
 }
 
 dtq.log <- dtq.log$new()

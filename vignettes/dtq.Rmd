@@ -36,23 +36,26 @@ DT <- data.table(
   v1 =  sample(5, N, TRUE)
 )
 
-# single queries aggregations
-r <- DT[, sum(v1), keyby=.(id1, id2)]
-r <- DT[, lapply(.SD, mean), keyby=id3, .SDcols="v1"]
+# data.table queries examples
+{
+  # single queries aggregations
+  DT[, sum(v1), keyby=.(id1, id2)]
+  DT[, lapply(.SD, mean), keyby=id3, .SDcols="v1"]
+  
+  # single queries filtering
+  DT[id1 %like% "id02"]
+  DT[id1=="id027"]
+  
+  # query chain
+  DT[, .(v1=sum(v1)), .(id1, id2, id3)
+     ][, .(v1=sum(v1)), .(id1, id2)
+       ][, .(v1=sum(v1)), .(id1)
+         ][, .(v1=sum(v1))]
+  invisible()
+}
 
-# single queries filtering
-r <- DT[id1 %like% "id02"]
-r <- DT[id1=="id027"]
-
-# query chain
-r <- DT[, .(v1=sum(v1)), .(id1, id2, id3)
-        ][, .(v1=sum(v1)), .(id1, id2)
-          ][, .(v1=sum(v1)), .(id1)
-            ][, .(v1=sum(v1))]
-
-# print queries log
-dt <- dtl()
-knitr::kable(subset(dt, select = -dtq))
+# access data.table logs and print details
+knitr::kable(dtl(print=TRUE))
 # print queries log aggregated to chains
 dt <- dtl(chain=TRUE)
 knitr::kable(dt)
@@ -72,5 +75,5 @@ setattr(DT,"read.only",TRUE)
 DT[, a := 2L]
 print(DT)
 
-knitr::kable(subset(dtl(), select = -dtq))
+knitr::kable(dtl(print=TRUE))
 ```

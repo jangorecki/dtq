@@ -1,8 +1,8 @@
 Package: dtq
 Type: Package
 Title: data.table query
-Version: 0.1.9
-Date: 2015-04-19
+Version: 0.1.9.2
+Date: 2015-04-24
 Author: Jan Gorecki
 Maintainer: Jan Gorecki <J.Gorecki@wit.edu.pl>
 Description: Log details of data.table queries, read-only feature.

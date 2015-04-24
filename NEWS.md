@@ -1,3 +1,8 @@
+# dtq 0.1.9.2
+
+- [x] vectorizing a lot of functions
+- [ ] log source data.table name
+
 # dtq 0.1.9
 
 - [x] new dependency R 3.2.0
@@ -8,7 +13,6 @@
 - [x] bug fixes
 - [x] removed some in-dev dtq methods
 - [x] a lot test scenarios
-- [ ] log source data.table name
 
 
 # dtq 0.1.8

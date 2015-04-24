@@ -17,7 +17,7 @@ test_that("dtq.log basics", {
   LKP[DT2, .(b, a, adj2_a = adj_a * ratio)]
   expect_identical(length(dtq.log$log), dtq.log$length(), info="dtq.log$length method")
   expect_identical(dtq.log$length(), 3L, info="number of calls")
-  log_fields <- c("timestamp", "env", "dtcall", "elapsed", "in_rows", "out_rows")
+  log_fields <- c("timestamp", "env", "dtq_call", "elapsed", "in_rows", "out_rows")
   expect_true(all(sapply(dtq.log$log, function(x) identical(names(x), log_fields))), info="all logs contains full set of fields")
   
 })
@@ -82,6 +82,10 @@ test_that("dtq.log process method", {
   dtq.log$process()
   expect_identical(dtq.log$length(), 1L, info="NULL data.table edge case")
   
+  dtl(purge = TRUE)
+  data.table()[][][][][][][]
+  expect_equal(subset(dtq.log$process(), select = c("seq", "dtq_id", "dtq_seq", "query", "in_rows", "out_rows")), data.table(seq=1:7,dtq_id=1L,dtq_seq=1:7,query=rep("[]",7),in_rows=0L,out_rows=0L), info="NULL data.table edge edge case")
+  
   dtl(purge=TRUE)
   DT <- data.table(a=1:10, b=1:5)
   DT[, .(a = sum(a)), b
@@ -113,6 +117,13 @@ test_that("dtq.log process method", {
   options("dtq.apply.depth"=1L)
   expect_error(dtq.log$process(), info="dtq.apply.depth option")
   options("dtq.apply.depth"=20L)
+  
+  dtl(purge=TRUE)
+  DT1 <- data.table(a=1:3, b=letters[1:3], key="a")
+  DT2 <- data.table(a=1:3, z=rnorm(3))
+  DT1[DT2[,.(z=sum(z)),,a]]
+  dtq.log$process()$query[2L]
+  expect_identical(dtq.log$process()[2L]$query, "[i = DT2[, .(z = sum(z)), , a]]", info="deparse `i` while join, test for #3")
   
 })
 
