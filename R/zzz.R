@@ -1,22 +1,5 @@
 .onLoad <- function(libname, pkgname){
   
-  # logging related opts
-  
-  options("dtq.log" = TRUE) # turn on logging
-  options("dtq.log.size" = 1e5L) # when log reach that num it stop logging and start throwing warnings
-  options("dtq.log.gc" = FALSE) # do gc() before each timing
-  options("dtq.log.nano" = TRUE) # if microbenchmark available it will use get_nanotime
-  options("dtq.log.exclude" = character()) # packages to exclude
-  options("dtq.log.include" = character()) # packages to include
-  
-  # dtq processing opts
-  
-  options("dtq.apply.depth" = 20L)
-    
-}
-
-.onAttach <- function(libname, pkgname){
-  
   # inject dtq logging and read.only to data.table:::`[.data.table`
   # based on: data.table:::`.onLoad`
   expr <- expression({
@@ -59,6 +42,23 @@
   lockBinding("[.data.table", asNamespace("data.table"))
   rm(expr, tt, ss)
   
+  # logging related opts
+  
+  options("dtq.log" = TRUE) # turn on logging
+  options("dtq.log.size" = 1e5L) # when log reach that num it stop logging and start throwing warnings
+  options("dtq.log.gc" = FALSE) # do gc() before each timing
+  options("dtq.log.nano" = TRUE) # if microbenchmark available it will use get_nanotime
+  options("dtq.log.exclude" = character()) # packages to exclude
+  options("dtq.log.include" = character()) # packages to include
+  
+  # dtq processing opts
+  
+  options("dtq.apply.depth" = 20L)
+  
+}
+
+.onAttach <- function(libname, pkgname){
+  invisible()
 }
 
 #' @export
