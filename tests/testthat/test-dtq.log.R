@@ -108,7 +108,7 @@ test_that("dtq.log process method", {
   dtl(purge = TRUE)
   DT <- data.table(a = 1:10, b = letters[1:5])
   DT[keyby=b,,.(a=sum(a))]
-  expect_identical(.DTQ$process()[1L]$query, "[j = .(a = sum(a)), keyby = b]", info="reordered input to `[`")
+  expect_identical(.DTQ$process()$query[[1L]], "[j = .(a = sum(a)), keyby = b]", info="reordered input to `[`")
   
   dtl(purge = TRUE)
   DT <- data.table(a = 1:10, b = letters[1:5])
@@ -121,13 +121,44 @@ test_that("dtq.log process method", {
   DT1 <- data.table(a=1:3, b=letters[1:3], key="a")
   DT2 <- data.table(a=1:3, z=rnorm(3))
   DT1[DT2[,.(z=sum(z)),,a]]
-  .DTQ$process()$query[2L]
-  expect_identical(.DTQ$process()[2L]$query, "[i = DT2[, .(z = sum(z)), , a]]", info="deparse `i` while join, test for #3")
+  expect_identical(.DTQ$process()$query, c("[j = .(z = sum(z)), keyby = a]","[i = DT2[, .(z = sum(z)), , a]]"), info="deparse `i` while join, test for #3")
   
-  ## TO DO
-  # DT[x[2:3]]
-  # DT[f()[2:3]]
-  # DT[f()[2:3, .(a)]]
+  dtl(purge=TRUE)
+  DT <- data.table(a=1:4, b=letters[1:4])
+  x <- 1:5
+  DT[x[2:3]]
+  expect_identical(.DTQ$length(), 1L, info="subset dt on row id from subset of integer vector, length")
+  expect_identical(.DTQ$process()$query, "[i = x[2:3]]", info="subset dt on row id from subset of integer vector, query")
+  
+  dtl(purge=TRUE)
+  DT <- data.table(a=1:4, b=letters[1:4])
+  X <- data.table(z = 1:5)
+  DT[X[2:3,z]]
+  expect_identical(.DTQ$length(), 2L, info="subset dt on row id from subset of data.table, length")
+  expect_identical(.DTQ$process()$query, c("[i = 2:3, j = z]","[i = X[2:3, z]]"), info="subset dt on row id from subset of data.table, query")
+  
+  dtl(purge=TRUE)
+  DT <- data.table(a=1:4, b=letters[1:4])
+  f <- function() 1:5
+  DT[f()[2:3]]
+  expect_identical(.DTQ$length(), 1L, info="subset dt on row id from function which returns integer vector, length")
+  expect_identical(.DTQ$process()$query, "[i = f()[2:3]]", info="subset dt on row id from function which returns integer vector, query")
+  
+  dtl(purge=TRUE)
+  DT <- data.table(a=1:4, b=letters[1:4])
+  f <- function() data.table(z = 1:5)
+  DT[f()[2:3, z]]
+  expect_identical(.DTQ$length(), 2L, info="subset dt on row id from function which returns data.table, length")
+  expect_identical(.DTQ$process()$query, c("[i = 2:3, j = z]","[i = f()[2:3, z]]"), info="subset dt on row id from function which returns data.table, query")
+  expect_identical(.DTQ$process()$src, c("f()","DT"), info="subset dt on row id from function which returns data.table, src")
+  
+  dtl(purge=TRUE)
+  DT <- function() data.table(a=1:4, b=letters[1:4])
+  f <- function() data.table(z = 1:5)
+  DT()[f()[2:3, z]]
+  expect_identical(.DTQ$length(), 2L, info="subset function-data.table to function-data.table, length")
+  expect_identical(.DTQ$process()$query, c("[i = 2:3, j = z]", "[i = f()[2:3, z]]"), info="subset function-data.table to function-data.table, query")
+  expect_identical(.DTQ$process()$src, c("f()","DT()"), info="subset function-data.table to function-data.table, src")
   
 })
 

@@ -24,7 +24,7 @@ install_github("jangorecki/dtq")
 
 ## Usage
 
-See [vignette](https://rawgit.com/jangorecki/b917a9f9a33fb98b714d/raw/b0febeac19d5309a829e2ad701877c2a45690c12/dtq.html).  
+See [vignette](https://rawgit.com/jangorecki/b917a9f9a33fb98b714d/raw/9a3a17995c33bc9932f1d8b8719f5188cbc12ca4/dtq.html).  
 
 ```r
 library(dtq)
@@ -34,7 +34,6 @@ DT2 <- DT[, .(a = sum(a)), b
           ][a > median(a), .(b, a, adj_a = a * 1.1)]
 LKP[DT2, .(b, a, adj2_a = adj_a * ratio)]
 dtl()
-dtl(chain=TRUE)
 ```
 
 Control logging by global options:

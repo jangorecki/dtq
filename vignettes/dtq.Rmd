@@ -20,13 +20,14 @@ knitr::opts_chunk$set(
   cache = FALSE,
   collapse = TRUE)
 library(dtq)
-dtl(purge=TRUE)
+invisible(dtl(purge=TRUE))
 ```
 
 ## Log query details
 
 ```{r dtl, message=FALSE}
 library(dtq)
+packageVersion("dtq")
 
 # populate data
 N=2e6; K=100
@@ -41,18 +42,22 @@ DT <- data.table(
 # data.table queries examples
 {
   # single queries aggregations
-  DT[, sum(v1), keyby=.(id1, id2)]
   DT[, lapply(.SD, mean), keyby=id3, .SDcols="v1"]
   
   # single queries filtering
   DT[id1 %like% "id02"]
-  DT[id1=="id027"]
   
   # query chain
   DT[, .(v1=sum(v1)), .(id1, id2, id3)
      ][, .(v1=sum(v1)), .(id1, id2)
        ][, .(v1=sum(v1)), .(id1)
          ][, .(v1=sum(v1))]
+  
+  # nested functions
+  d <- function() data.table(a=1:4, b=letters[1:4])
+  f <- function() data.table(z = 1:5)
+  d()[f()[2:3, z]]
+  
   invisible()
 }
 
