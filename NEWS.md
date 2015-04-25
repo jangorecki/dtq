@@ -1,8 +1,8 @@
 # dtq 0.1.9.3
 
-- [ ] add source name to `dtl(chain=TRUE)`
-- [ ] more unit tests
+- [x] add source name to `dtl(chain=TRUE)`
 - [x] removed internal not currently used functions
+- [ ] more unit tests
 
 
 # dtq 0.1.9.2

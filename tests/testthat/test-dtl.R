@@ -12,10 +12,18 @@ test_that("dtl expected data types", {
   
 })
 
-test_that("dtl chain", {
+test_that("dtl chain expected data types", {
   
-  # TO DO
-  expect_identical(FALSE, FALSE, info="query to chain aggregation")
+  dtl(purge=TRUE)
+  DT <- data.table(a=1:10, b=1:5)
+  DT[, .(a = sum(a)), b
+     ][a > median(a), .(a, b, z = b + a)]
+  DT[][][]
+  expect_identical(nrow(dtl(chain=FALSE)), 5L, info="valid number of queries")
+  expect_identical(nrow(dtl(chain=TRUE)), 2L, info="valid number of chains")
+  expected_r <- structure(c("integer", "character", "character", "integer", "character", "double", "double", "integer", "integer"),
+                          .Names = c("dtq_id", "env", "src", "dtq_depth", "query", "timestamp", "elapsed", "in_rows", "out_rows"))
+  expect_identical(sapply(dtl(chain=TRUE), typeof), expected_r, info="chain aggregation output column types")
   
 })
 
