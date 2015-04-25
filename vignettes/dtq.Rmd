@@ -68,8 +68,8 @@ data.table query call and all gathered metadata.
 *in/out rows* and *transformation step* by lookup to dtq logs.  
 
 ```{r dtq}
-dtl()$dtq[2L] # 2nd dt query
-dtl()$dtq[6L] # 6th dt query
+dtl()$dtq[[2L]] # 2nd dt query
+dtl()$dtq[[6L]] # 6th dt query
 ```
 
 ## Set data.table read-only

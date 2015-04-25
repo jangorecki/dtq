@@ -16,7 +16,7 @@ the same call(s) but with matched arguments
 match.dtq.call
 }
 \note{
-currently not used during processing as dtq catches already matched call, but can be utilized in case of any other catched dtq
+currently not even required during processing as dtq catches already matched call, but can be utilized in manual catching dtq
 }
 \seealso{
 \link{is.dtq.call}

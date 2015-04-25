@@ -20,7 +20,6 @@ test_that("do.dtq.log exclude-include opts", {
           "dtq.log.include" = "R_GlobalEnv")
   dtl(purge = TRUE)
   DT[]
-  writeLines(.DTQ$log[[1L]]$env,"env.txt")
   expect_identical(.DTQ$length(), 1L, info="include log global env")
   
   options("dtq.log.exclude" = "R_GlobalEnv",

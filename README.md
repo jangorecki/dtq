@@ -1,6 +1,6 @@
 # data.table query [![Build Status](https://travis-ci.org/jangorecki/dtq.svg?branch=master)](https://travis-ci.org/jangorecki/dtq)
 
-**Current version:** [0.1.9.2](NEWS.md)  
+**Current version:** [0.1.9.3](NEWS.md)  
 
 - [x] log data.table query details
   - [x] call
@@ -24,7 +24,7 @@ install_github("jangorecki/dtq")
 
 ## Usage
 
-See [vignette](https://rawgit.com/jangorecki/b917a9f9a33fb98b714d/raw/e9faba249019228f3b389e8bb3b50cca14ce8a53/dtq.html).  
+See [vignette](https://rawgit.com/jangorecki/b917a9f9a33fb98b714d/raw/b0febeac19d5309a829e2ad701877c2a45690c12/dtq.html).  
 
 ```r
 library(dtq)

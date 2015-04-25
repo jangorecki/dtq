@@ -213,7 +213,7 @@ is.dtq.call <- function(x){
 #' @title match.dtq.call
 #' @param x call or list of calls, valid data.table query call
 #' @seealso \link{is.dtq.call}
-#' @note currently not used during processing as dtq catches already matched call, but can be utilized in case of any other catched dtq
+#' @note currently not even required during processing as dtq catches already matched call, but can be utilized in manual catching dtq
 #' @return the same call(s) but with matched arguments
 match.dtq.call <- function(x){
   match.dtq.call.scalar <- function(x){
@@ -240,34 +240,4 @@ deparse.dtq.call <- function(x){
   args.list <- lapply(decall.list, `[`, -c(1L,2L)) # exclude '[' and x' elements
   query.list <- lapply(args.list, function(args) vapply(names(args), deparse_and_paste_arg, "", args, USE.NAMES=FALSE))
   lapply(query.list, function(query) paste0("[",paste(query,collapse=", "),"]"))
-}
-
-#' @title dtq depth
-#' @param x list of calls
-#' @param apply.depth integer limit of recursive call in chain
-#' @return depth of tested queries in chain, points to the `src` object.
-#' @note Currently not used, process in using `dtq` class object `depth` method because dtq class store calls casted to recursive lists of calls. Calls are matched to `[.data.table` and that makes `depth` function catch more cases.
-depth.dtq.call <- function(x, apply.depth = getOption("dtq.apply.depth",20L)){
-  depth.dtq.call.scalar <- function(x){
-    for(i.depth in (seq_len(apply.depth)-1L)){ # i.depth <- 0L
-      if(i.depth == 0L){
-        if(!is.dtq.call(x)) return(i.depth) # 0L
-        else if(is.dtq.call(x[[2L]])) next()
-        else return(i.depth+1L)
-      }
-      else if(i.depth > 0L){
-        if(!is.dtq.call(x[[rep(2L,i.depth)]])) return(i.depth-1L) # 0L
-        if(is.dtq.call(x[[rep(2L,i.depth)]])){
-          if(is.call(x[[rep(2L,i.depth)]][2L])) next()
-          return(i.depth)
-        }
-        next()
-      }
-    }
-    browser()
-    stop(paste0("dtq depth recursive call limit exceeded, current limit ",apply.depth,", use: options('dtq.apply.depth')"))
-  }
-  if(is.call(x)) depth.dtq.call.scalar(x)
-  else if(is.list(x)) lapply(x, depth.dtq.call.scalar)
-  else if(!is.list(x)) stop("depth.dtq.call accepts call or list only")
 }
