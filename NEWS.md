@@ -1,7 +1,10 @@
 # dtq 0.1.9.2
 
+- [x] dtq class new methods
 - [x] vectorizing a lot of functions
-- [ ] log source data.table name
+- [x] log source data.table name
+- [ ] more unit tests
+
 
 # dtq 0.1.9
 

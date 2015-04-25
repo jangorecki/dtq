@@ -14,13 +14,13 @@ NULL
 #' @export
 dtl <- function(print = FALSE, chain = FALSE, purge = FALSE){
   env <- dtq_id <- . <- query <- elapsed <- in_rows <- out_rows <- NULL
-  if(isTRUE(purge)) return(invisible(dtq.log$purge()))
-  dt <- dtq.log$process()
+  if(isTRUE(purge)) return(invisible(.DTQ$purge()))
+  dt <- .DTQ$process()
   if(!isTRUE(chain)){
     if(isTRUE(print)) dt <- dt[, .SD, .SDcols=-c("dtq","dtq_call")]
   }
   else if(isTRUE(chain)){
-    dt <- dt[,.(dtq_depth=.N, query=paste(query,collapse=""), timestamp=timestamp[.N], elapsed=sum(elapsed), in_rows=in_rows[1L], out_rows=out_rows[.N]), .(dtq_id,env)]
+    dt <- dt[,.(dtq_depth=.N, query=paste(query,collapse=""), timestamp=timestamp[.N], elapsed=sum(elapsed), in_rows=in_rows[1L], out_rows=out_rows[.N]), .(dtq_id, env)]
   }
   return(dt)
 }
@@ -51,13 +51,15 @@ do.dtq.log <- function(te){
   }
 }
 
+# dtq.log -------------------------------------------------------------------
+
 #' @title data.table queries log storage
 #' @docType class
 #' @format An R6 class object.
 #' @name dtq.log
 #' @details Environment to store data.table queries, use \link{dtl} to access formatted logs.
 #' @seealso \link{dtl}, \link{dtq}
-#' @export
+#' @aliases .DTQ
 dtq.log <- R6Class(
   classname = "dtq.log",
   public = list(
@@ -85,11 +87,15 @@ dtq.log <- R6Class(
       rbindlist(self$log)[
         ][, seq := seq_len(.N)
           ][, dtq := list(mapply(dtq$new, dtq_call, env, SIMPLIFY = FALSE)) # using lower granularity class because it recursively match.calls in the chain and allow to get depth
-            ][, dtq_seq := sapply(dtq, function(x) x$depth())
-              ][, query := unlist(deparse.dtq.call(dtq_call))
-                ][, dtq_id := cumsum(dtq_seq==1L)
-                  ][, .(seq, dtq_id, dtq_seq, dtq, dtq_call, query, timestamp, env, elapsed, in_rows, out_rows)
-                    ][]
+            ][, dtq_seq := sapply(dtq, function(x) x$depth)
+              ][, dtq_id := cumsum(dtq_seq==1L)
+                ][, dtq_depth := max(dtq_seq), .(dtq_id)
+                  ][, dtq := list(mapply(function(x, dtq_seq, dtq_depth) x$apply.DTQ.seq.depth(dtq_seq, dtq_depth), dtq, dtq_seq, dtq_depth, SIMPLIFY = FALSE)) # update child class metadata
+                    ][, dtq := list(mapply(function(x, in_rows, out_rows) x$apply.DTQ.rows(in_rows, out_rows), dtq, in_rows, out_rows, SIMPLIFY = FALSE)) # update child class metadata
+                      ][, src := sapply(dtq, function(x) x$src)
+                        ][, query := unlist(deparse.dtq.call(dtq_call))
+                          ][, .(seq, dtq_id, dtq_seq, dtq, dtq_call, src, query, timestamp, env, elapsed, in_rows, out_rows)
+                            ][]
     },
     print = function(){
       print(self$process())
@@ -100,6 +106,8 @@ dtq.log <- R6Class(
     empty = function() data.table(seq=integer(), dtq_id=integer(), dtq_seq=integer(), dtq=list(), query=character(), timestamp=Sys.time()[-1L], env=character(), elapsed=numeric(), in_rows=integer(), out_rows=integer()),
     na = function() self$empty[1L]
   ))
+
+# dtq ---------------------------------------------------------------------
 
 #' @title data.table query
 #' @docType class
@@ -119,33 +127,65 @@ dtq <- R6Class(
     call = NULL,
     env = character(),
     query = list(),
+    depth = integer(),
+    src = character(),
+    DTQ_seq = NA_integer_,
+    DTQ_depth = NA_integer_,
+    DTQ_in_rows = NA_integer_,
+    DTQ_out_rows = NA_integer_,
     decall = function(x){
       if(is.call(x)){
         if(x[[1L]]==as.name("[") || x[[1L]]==as.name("[.data.table")) mx <- as.list(match.call(match.fun(data.table:::`[.data.table`), x)) else return(x)
       } else return(x)
-      lx <- as.list(x)
+      #lx <- as.list(x)
       to_decall <- chmatch(c("x","i"), names(mx))
-      for(id in to_decall[!is.na(to_decall)]) lx[[id]] <- self$decall(x[[id]])
-      lx
+      for(id in to_decall[!is.na(to_decall)]) mx[[id]] <- self$decall(x[[id]])
+      mx
     }, # recursive trasnform calls to lists of languages
     initialize = function(x, env = NA_character_){
       self$call <- x
       self$env <- env
       self$query <- self$decall(self$call)
+      self$depth <- self$get.depth()
+      self$src <- self$get.src()
       invisible(self)
     },
     length = function(){
       base::length(self$query)
     },
-    depth = function(apply.depth = getOption("dtq.apply.depth")){
+    get.depth = function(apply.depth = getOption("dtq.apply.depth")){
       for(i.depth in seq_len(apply.depth)){
         if(i.depth > 1L && length(self$query[[rep(2L,i.depth-1L)]]) < 2L) return(i.depth-1L) # handle: data.table()[]
         if(is.name(self$query[[rep(2L,i.depth)]])) return(i.depth)
       }
       stop(paste0("dtq depth recursive call limit exceeded, current limit ",apply.depth,", use: options('dtq.apply.depth')"))
     }, # dtq depth
+    get.src = function(){
+      if(self$depth > 1L && is.name(self$query[[rep(2L,self$depth-1L)]])){
+        paste(deparse(self$query[[rep(2L,self$depth-1L)]], width.cutoff = 500L), collapse="\n")
+      }
+      else {
+        paste(deparse(self$query[[rep(2L,self$depth)]], width.cutoff = 500L), collapse="\n")
+      }
+    },
+    apply.DTQ.seq.depth = function(seq, depth){
+      # update btq class object for higher level data from DTQ class
+      self$DTQ_seq <- seq
+      self$DTQ_depth <- depth
+      invisible(self)
+    },
+    apply.DTQ.rows = function(in_rows, out_rows){
+      # update btq class object for higher level data from DTQ class
+      self$DTQ_in_rows <- in_rows
+      self$DTQ_out_rows <- out_rows
+      invisible(self)
+    },
     print = function(){
-      # print(deparse.dtq.call(self$call))
+      cat("data.table query:\n")
+      cat("  data source name:",self$src,"\n")
+      cat("  transformation step:",self$DTQ_seq,"/",self$DTQ_depth,"\n")
+      cat("  body:",unlist(deparse.dtq.call(list(self$call))),"\n")
+      cat("  in rows:",self$DTQ_in_rows,"| out rows",self$DTQ_out_rows,"\n")
       invisible(self)
     }
   ),
@@ -155,7 +195,7 @@ dtq <- R6Class(
   )
 )
 
-# -----------------------------------------------------------------
+# helpers -----------------------------------------------------------------
 
 #' @title is.dtq.call
 #' @param x call or list of calls
@@ -224,6 +264,7 @@ depth.dtq.call <- function(x, apply.depth = getOption("dtq.apply.depth",20L)){
         next()
       }
     }
+    browser()
     stop(paste0("dtq depth recursive call limit exceeded, current limit ",apply.depth,", use: options('dtq.apply.depth')"))
   }
   if(is.call(x)) depth.dtq.call.scalar(x)

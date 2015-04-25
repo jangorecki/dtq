@@ -1,6 +1,6 @@
 # data.table query [![Build Status](https://travis-ci.org/jangorecki/dtq.svg?branch=master)](https://travis-ci.org/jangorecki/dtq)
 
-**Current version:** [0.1.9](NEWS.md)  
+**Current version:** [0.1.9.2](NEWS.md)  
 
 - [x] log data.table query details
   - [x] call
@@ -9,8 +9,10 @@
   - [x] timing
   - [x] in rows
   - [x] out rows
+  - [x] source name
 - [x] control query logging environments
 - [x] `read.only` attribute for data.table
+- [x] `dtq` class to store dtq call and metadata
 
 ## Installation
 

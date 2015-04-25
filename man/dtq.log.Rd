@@ -2,6 +2,7 @@
 % Please edit documentation in R/dtq.R
 \docType{class}
 \name{dtq.log}
+\alias{.DTQ}
 \alias{dtq.log}
 \title{data.table queries log storage}
 \format{An R6 class object.}

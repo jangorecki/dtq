@@ -31,7 +31,7 @@
           in_rows <- nrow(x)
           if(isTRUE(getOption("dtq.log.gc"))) gc(FALSE)
           start <- if(isTRUE(getOption("dtq.log.nano")) && requireNamespace("microbenchmark", quietly=TRUE)) microbenchmark::get_nanotime()*1e-9 else proc.time()[[3L]]
-          function(timestamp, end, out_rows) dtq::dtq.log$add(list(timestamp = timestamp, env = env, dtq_call = dtq_call, elapsed = end - start, in_rows = in_rows, out_rows = out_rows))
+          function(timestamp, end, out_rows) dtq::.DTQ$add(list(timestamp = timestamp, env = env, dtq_call = dtq_call, elapsed = end - start, in_rows = in_rows, out_rows = out_rows))
         })
         on.exit(
           dtq.local.log(
@@ -61,4 +61,5 @@
   
 }
 
-dtq.log <- dtq.log$new()
+#' @export
+.DTQ <- dtq.log$new()

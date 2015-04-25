@@ -6,7 +6,7 @@ test_that("dtq.log basics", {
   dtl(purge = TRUE)
   DT <- data.table(a = 1:10, b = letters[1:5])
   DT[,.(a,b)]
-  expect_identical(dtq.log$length(), 0L, info="dtq.log=FALSE option works")
+  expect_identical(.DTQ$length(), 0L, info="dtq.log=FALSE option works")
   options("dtq.log"=TRUE)
   
   dtl(purge = TRUE)
@@ -15,10 +15,10 @@ test_that("dtq.log basics", {
   DT2 <- DT[, .(a = sum(a)), b
             ][a > median(a), .(b, a, adj_a = a * 1.1)]
   LKP[DT2, .(b, a, adj2_a = adj_a * ratio)]
-  expect_identical(length(dtq.log$log), dtq.log$length(), info="dtq.log$length method")
-  expect_identical(dtq.log$length(), 3L, info="number of calls")
+  expect_identical(length(.DTQ$log), .DTQ$length(), info="dtq.log$length method")
+  expect_identical(.DTQ$length(), 3L, info="number of calls")
   log_fields <- c("timestamp", "env", "dtq_call", "elapsed", "in_rows", "out_rows")
-  expect_true(all(sapply(dtq.log$log, function(x) identical(names(x), log_fields))), info="all logs contains full set of fields")
+  expect_true(all(sapply(.DTQ$log, function(x) identical(names(x), log_fields))), info="all logs contains full set of fields")
   
 })
 
@@ -28,13 +28,13 @@ test_that("dtq.log process method: in-out rows", {
   dtl(purge = TRUE)
   DT[FALSE][,.(a,b)][,z := a+b]
   DT[,.(sum(a)),b][-.N][]
-  expect_identical(sapply(dtq.log$log,`[[`,"in_rows"), c(10L,0L,0L,10L,5L,4L), info="basic in rows")
+  expect_identical(sapply(.DTQ$log,`[[`,"in_rows"), c(10L,0L,0L,10L,5L,4L), info="basic in rows")
   
   f <- function() data.table(a = 1:3)
   dtl(purge = TRUE)
   f()[,.(sum(a))]
   data.table()[]
-  expect_identical(sapply(dtq.log$log,`[[`,"in_rows"), c(3L,0L), info="advanced in rows")
+  expect_identical(sapply(.DTQ$log,`[[`,"in_rows"), c(3L,0L), info="advanced in rows")
   
   DT <- data.table(a = 1:10, b = 1:5)
   dtl(purge = TRUE)
@@ -42,7 +42,7 @@ test_that("dtq.log process method: in-out rows", {
   DT[,.(sum(a))]
   DT[,sum(a),b]
   DT[,z:=sum(a),b]
-  expect_identical(sapply(dtq.log$log,`[[`,"out_rows"), c(10L,1L,5L,10L), info="basic out rows")
+  expect_identical(sapply(.DTQ$log,`[[`,"out_rows"), c(10L,1L,5L,10L), info="basic out rows")
   
   DT <- data.table(a = 1:10, b = rnorm(10))
   dtl(purge = TRUE)
@@ -50,7 +50,7 @@ test_that("dtq.log process method: in-out rows", {
   DT[,a]
   DT[,mean(a)]
   DT[,.N]
-  expect_identical(sapply(dtq.log$log,`[[`,"out_rows"), rep(NA_integer_,4L), info="NA out rows")
+  expect_identical(sapply(.DTQ$log,`[[`,"out_rows"), rep(NA_integer_,4L), info="NA out rows")
   
   DT <- data.table(a = 1:10, b = 1:5, key="b")
   f <- function() data.table(a = 1:3)
@@ -60,7 +60,7 @@ test_that("dtq.log process method: in-out rows", {
   DT[,.SD]
   DT[-.N][-.N][-.N][-.N]
   f()[-2L]
-  expect_identical(sapply(dtq.log$log,`[[`,"out_rows"), c(0L,20L,10L,9:6,2L), info="advanced out rows")
+  expect_identical(sapply(.DTQ$log,`[[`,"out_rows"), c(0L,20L,10L,9:6,2L), info="advanced out rows")
   
 })
 
@@ -70,8 +70,8 @@ test_that("dtq.log purge method", {
   DT <- data.table(a=1:10, b=1:5)
   DT[, .(a = sum(a)), b
      ][a > median(a), .(a, b, z = b + a)]
-  dtq.log$purge()
-  expect_identical(dtq.log$length(), 0L, info="purge")
+  .DTQ$purge()
+  expect_identical(.DTQ$length(), 0L, info="purge")
   
 })
 
@@ -79,12 +79,11 @@ test_that("dtq.log process method", {
   
   dtl(purge = TRUE)
   data.table()[]
-  dtq.log$process()
-  expect_identical(dtq.log$length(), 1L, info="NULL data.table edge case")
+  expect_identical(.DTQ$length(), 1L, info="NULL data.table edge case")
   
   dtl(purge = TRUE)
   data.table()[][][][][][][]
-  expect_equal(subset(dtq.log$process(), select = c("seq", "dtq_id", "dtq_seq", "query", "in_rows", "out_rows")), data.table(seq=1:7,dtq_id=1L,dtq_seq=1:7,query=rep("[]",7),in_rows=0L,out_rows=0L), info="NULL data.table edge edge case")
+  expect_equal(subset(.DTQ$process(), select = c("seq", "dtq_id", "dtq_seq", "query", "in_rows", "out_rows")), data.table(seq=1:7,dtq_id=1L,dtq_seq=1:7,query=rep("[]",7),in_rows=0L,out_rows=0L), info="NULL data.table edge edge case")
   
   dtl(purge=TRUE)
   DT <- data.table(a=1:10, b=1:5)
@@ -92,38 +91,43 @@ test_that("dtq.log process method", {
      ][a > median(a), .(a, b, z = b + a)]
   DT[,.(a,b)]
   DT[,.(a,b)][,.(a,b)][,.(a,b)]
-  dt <- dtq.log$process()
+  dt <- .DTQ$process()
   expect_identical(dt[,.N,.(dtq_id)][,N], c(2L,1L,3L), info="queries within sequence")
   
   dtl(purge=TRUE)
   DT1 <- data.table(a=1:3, b=letters[1:3], key="a")
   DT2 <- data.table(a=1:3, z=rnorm(3))
   DT1[DT2[,.(z=sum(z)),,a]]
-  expect_identical(dtq.log$length(), 2L, info="join with nested subset")
+  expect_identical(.DTQ$length(), 2L, info="join with nested subset")
   
   dtl(purge=TRUE)
   DT <- data.table(a=1:10, b=1:5)
   DT[,.(.I, .N, GRP = .GRP), b][, head(.SD,1L), GRP]
-  expect_identical(dtq.log$process()$query, c("[j = .(.I, .N, GRP = .GRP), by = b]","[j = head(.SD, 1L), by = GRP]"), info="usage of .I, .N, .GRP, .SD")
+  expect_identical(.DTQ$process()$query, c("[j = .(.I, .N, GRP = .GRP), by = b]","[j = head(.SD, 1L), by = GRP]"), info="usage of .I, .N, .GRP, .SD")
   
   dtl(purge = TRUE)
   DT <- data.table(a = 1:10, b = letters[1:5])
   DT[keyby=b,,.(a=sum(a))]
-  expect_identical(dtq.log$process()[1L]$query, "[j = .(a = sum(a)), keyby = b]", info="reordered input to `[`")
+  expect_identical(.DTQ$process()[1L]$query, "[j = .(a = sum(a)), keyby = b]", info="reordered input to `[`")
   
   dtl(purge = TRUE)
   DT <- data.table(a = 1:10, b = letters[1:5])
   DT[,.(a,b)][,.(a,b)]
   options("dtq.apply.depth"=1L)
-  expect_error(dtq.log$process(), info="dtq.apply.depth option")
+  expect_error(.DTQ$process(), info="dtq.apply.depth option")
   options("dtq.apply.depth"=20L)
   
   dtl(purge=TRUE)
   DT1 <- data.table(a=1:3, b=letters[1:3], key="a")
   DT2 <- data.table(a=1:3, z=rnorm(3))
   DT1[DT2[,.(z=sum(z)),,a]]
-  dtq.log$process()$query[2L]
-  expect_identical(dtq.log$process()[2L]$query, "[i = DT2[, .(z = sum(z)), , a]]", info="deparse `i` while join, test for #3")
+  .DTQ$process()$query[2L]
+  expect_identical(.DTQ$process()[2L]$query, "[i = DT2[, .(z = sum(z)), , a]]", info="deparse `i` while join, test for #3")
+  
+  ## TO DO
+  # DT[x[2:3]]
+  # DT[f()[2:3]]
+  # DT[f()[2:3, .(a)]]
   
 })
 
@@ -132,6 +136,6 @@ test_that("dtq.log timing", {
   dtl(purge=TRUE)
   DT <- data.table(a=1:10, b=1:5)
   DT[,{Sys.sleep(0.16); .(a = sum(a))}]
-  expect_true(dtq.log$log[[1L]]$elapsed > 0.15, info="timing correct for Sys.sleep case")
+  expect_true(.DTQ$log[[1L]]$elapsed > 0.15, info="timing correct for Sys.sleep case")
   
 })

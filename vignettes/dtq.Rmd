@@ -19,6 +19,8 @@ knitr::opts_chunk$set(
   tidy = FALSE,
   cache = FALSE,
   collapse = TRUE)
+library(dtq)
+dtl(purge=TRUE)
 ```
 
 ## Log query details
@@ -57,8 +59,17 @@ DT <- data.table(
 # access data.table logs and print details
 knitr::kable(dtl(print=TRUE))
 # print queries log aggregated to chains
-dt <- dtl(chain=TRUE)
-knitr::kable(dt)
+knitr::kable(dtl(chain=TRUE))
+```
+
+## dtq class
+
+data.table query call and all gathered metadata.  
+*in/out rows* and *transformation step* by lookup to dtq logs.  
+
+```{r dtq}
+dtl()$dtq[2L] # 2nd dt query
+dtl()$dtq[6L] # 6th dt query
 ```
 
 ## Set data.table read-only
