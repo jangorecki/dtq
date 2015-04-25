@@ -14,13 +14,15 @@ NULL
 #' @export
 dtl <- function(print = FALSE, chain = FALSE, purge = FALSE){
   src <- env <- dtq_id <- . <- query <- elapsed <- in_rows <- out_rows <- NULL
-  if(isTRUE(purge)) return(invisible(.DTQ$purge()))
-  dt <- .DTQ$process()
+  if(isTRUE(purge)){
+    dt <- .DTQ$purge()$empty
+  } else {
+    dt <- .DTQ$process()
+  }
   if(!isTRUE(chain)){
     if(isTRUE(print)) dt <- dt[, .SD, .SDcols=-c("dtq","dtq_call")]
-  }
-  else if(isTRUE(chain)){
-    dt <- dt[,.(dtq_depth=.N, query=paste(query, collapse=""), timestamp=timestamp[.N], elapsed=sum(elapsed), in_rows=in_rows[1L], out_rows=out_rows[.N]), .(dtq_id, env, src)]
+  } else if(isTRUE(chain)){
+    dt <- dt[,.(dtq_depth=.N, query=paste(query, collapse=""), timestamp=timestamp[.N], elapsed=sum(elapsed), in_rows=in_rows[min(1L,nrow(dt))], out_rows=out_rows[.N]), .(dtq_id, env, src)]
   }
   return(dt)
 }
@@ -103,7 +105,7 @@ dtq.log <- R6Class(
     }
   ),
   active = list(
-    empty = function() data.table(seq=integer(), dtq_id=integer(), dtq_seq=integer(), dtq=list(), query=character(), timestamp=Sys.time()[-1L], env=character(), elapsed=numeric(), in_rows=integer(), out_rows=integer()),
+    empty = function() data.table(seq=integer(), dtq_id=integer(), dtq_seq=integer(), dtq=list(), dtq_call=list(), src=character(), query=character(), timestamp=Sys.time()[-1L], env=character(), elapsed=numeric(), in_rows=integer(), out_rows=integer()),
     na = function() self$empty[1L]
   ))
 

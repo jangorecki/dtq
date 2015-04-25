@@ -8,7 +8,9 @@ test_that("dtl expected data types", {
      ][a > median(a), .(a, b, z = b + a)]
   expected_r <- structure(c("integer", "integer", "integer", "list", "list", "character", "character", "double", "character", "double", "integer", "integer"),
                           .Names = c("seq", "dtq_id", "dtq_seq", "dtq", "dtq_call", "src", "query", "timestamp", "env", "elapsed", "in_rows", "out_rows"))
-  expect_identical(sapply(dtl(),typeof), expected_r, info="output column types")
+  expect_identical(sapply(dtl(), typeof), expected_r, info="output column types")
+  dtl(purge=TRUE)
+  expect_identical(sapply(dtl(), typeof), expected_r, info="empty output column types")
   
 })
 
@@ -24,6 +26,8 @@ test_that("dtl chain expected data types", {
   expected_r <- structure(c("integer", "character", "character", "integer", "character", "double", "double", "integer", "integer"),
                           .Names = c("dtq_id", "env", "src", "dtq_depth", "query", "timestamp", "elapsed", "in_rows", "out_rows"))
   expect_identical(sapply(dtl(chain=TRUE), typeof), expected_r, info="chain aggregation output column types")
+  dtl(purge=TRUE)
+  expect_identical(sapply(dtl(chain=TRUE), typeof), expected_r, info="empty chain aggregation output column types")
   
 })
 
