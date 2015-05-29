@@ -34,12 +34,14 @@
   tt = get("[.data.table", envir=asNamespace("data.table"), inherits=FALSE)
   ss = body(tt)
   if (class(ss)!="{") ss = as.call(c(as.name("{"), ss))
-  ss = ss[c(1L,NA,2:length(ss))]
-  ss[[2L]] = expr[[1L]]
-  body(tt) = ss
-  (unlockBinding)("[.data.table", asNamespace("data.table"))
-  assign("[.data.table", tt, envir=asNamespace("data.table"), inherits=FALSE)
-  lockBinding("[.data.table", asNamespace("data.table"))
+  if (!length(grep("dtq.log",ss[[2L]]))) {
+    ss = ss[c(1L,NA,2:length(ss))]
+    ss[[2L]] = expr[[1L]]
+    body(tt) = ss
+    (unlockBinding)("[.data.table", asNamespace("data.table"))
+    assign("[.data.table", tt, envir=asNamespace("data.table"), inherits=FALSE)
+    lockBinding("[.data.table", asNamespace("data.table"))
+  }
   rm(expr, tt, ss)
   
   # logging related opts
@@ -54,6 +56,23 @@
   # dtq processing opts
   
   options("dtq.apply.depth" = 20L)
+  
+}
+
+.onUnload <- function(libpath){
+  
+  # remove injected expression from data.table:::`[.data.table` on unload of dtq
+  tt = get("[.data.table", envir=asNamespace("data.table"), inherits=FALSE)
+  ss = body(tt)
+  if (class(ss)!="{") ss = as.call(c(as.name("{"), ss))
+  if (length(grep("dtq.log",ss[[2L]]))) {
+    ss = ss[-2L]
+    body(tt) = ss
+    (unlockBinding)("[.data.table", asNamespace("data.table"))
+    assign("[.data.table", tt, envir=asNamespace("data.table"), inherits=FALSE)
+    lockBinding("[.data.table", asNamespace("data.table"))
+  }
+  rm(tt, ss)
   
 }
 
