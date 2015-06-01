@@ -83,7 +83,7 @@ test_that("dtq.log process method", {
   
   dtl(purge = TRUE)
   data.table()[][][][][][][]
-  expect_equal(subset(.DTQ$process(), select = c("seq", "dtq_id", "dtq_seq", "query", "in_rows", "out_rows")), data.table(seq=1:7,dtq_id=1L,dtq_seq=1:7,query=rep("[]",7),in_rows=0L,out_rows=0L), info="NULL data.table edge edge case")
+  expect_equal(subset(.DTQ$process(), select = c("seq", "dtq_id", "dtq_seq", "src", "query", "in_rows", "out_rows")), data.table(seq=1:7,dtq_id=1L,dtq_seq=1:7,src=rep("data.table()",7),query=rep("[]",7),in_rows=0L,out_rows=0L), info="NULL data.table edge edge case")
   
   dtl(purge=TRUE)
   DT <- data.table(a=1:10, b=1:5)
@@ -99,16 +99,19 @@ test_that("dtq.log process method", {
   DT2 <- data.table(a=1:3, z=rnorm(3))
   DT1[DT2[,.(z=sum(z)),,a]]
   expect_identical(.DTQ$length(), 2L, info="join with nested subset")
+  expect_identical(.DTQ$process()$src, c("DT2","DT1"), info="chain join select and aggr on DT1, DT2 variables, src test")
   
   dtl(purge=TRUE)
   DT <- data.table(a=1:10, b=1:5)
   DT[,.(.I, .N, GRP = .GRP), b][, head(.SD,1L), GRP]
   expect_identical(.DTQ$process()$query, c("[j = .(.I, .N, GRP = .GRP), by = b]","[j = head(.SD, 1L), by = GRP]"), info="usage of .I, .N, .GRP, .SD")
+  expect_identical(.DTQ$process()$src, c("DT","DT"), info="chain select and aggr on single DT variable, src test")
   
   dtl(purge = TRUE)
   DT <- data.table(a = 1:10, b = letters[1:5])
   DT[keyby=b,,.(a=sum(a))]
   expect_identical(.DTQ$process()$query[[1L]], "[j = .(a = sum(a)), keyby = b]", info="reordered input to `[`")
+  expect_identical(.DTQ$process()$src, "DT", info="keyby on single DT variable, src test")
   
   dtl(purge = TRUE)
   DT <- data.table(a = 1:10, b = letters[1:5])
@@ -159,6 +162,14 @@ test_that("dtq.log process method", {
   expect_identical(.DTQ$length(), 2L, info="subset function-data.table to function-data.table, length")
   expect_identical(.DTQ$process()$query, c("[i = 2:3, j = z]", "[i = f()[2:3, z]]"), info="subset function-data.table to function-data.table, query")
   expect_identical(.DTQ$process()$src, c("f()","DT()"), info="subset function-data.table to function-data.table, src")
+  
+  # closes #5
+  dtl(purge=TRUE)
+  f <- function() data.table(z = 1:5)
+  data.table(a=1:4, b=letters[1:4])[f()[2:3, z]]
+  expect_identical(.DTQ$length(), 2L, info="subset data.table-function to function-data.table, length")
+  expect_identical(.DTQ$process()$query, c("[i = 2:3, j = z]", "[i = f()[2:3, z]]"), info="subset data.table-function to function-data.table, query")
+  expect_identical(.DTQ$process()$src, c("f()","data.table(a = 1:4, b = letters[1:4])"), info="subset data.table-function to function-data.table, src")
   
 })
 

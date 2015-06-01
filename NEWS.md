@@ -3,6 +3,7 @@
 - [x] added source name to `dtl(chain=TRUE)` clean up use cases
 - [x] removed redundant function
 - [x] more unit tests
+- [x] edge cases correct deparsing
 
 
 # dtq 0.1.9.2

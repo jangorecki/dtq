@@ -163,21 +163,32 @@ dtq <- R6Class(
       stop(paste0("dtq depth recursive call limit exceeded, current limit ",apply.depth,", use: options('dtq.apply.depth')"))
     }, # dtq depth
     get.src = function(){
-      if(self$depth > 1L && is.name(self$query[[rep(2L,self$depth-1L)]])){
-        paste(deparse(self$query[[rep(2L,self$depth-1L)]], width.cutoff = 500L), collapse="\n")
-      }
-      else {
-        paste(deparse(self$query[[rep(2L,self$depth)]], width.cutoff = 500L), collapse="\n")
-      }
+      r <- tryCatch({
+        if(self$depth > 1L){
+          parent <- self$query[[rep(2L,self$depth-1L)]]
+          if(is.name(parent)){
+            deparse_char(parent) # parent
+          } else if(is.call(parent)){
+            deparse_char(self$query[[rep(2L,self$depth-2L)]]) # grand parent # closes #5
+          } else {
+            deparse_char(self$query[[rep(2L,self$depth)]]) # child
+          }
+        } else {
+          deparse_char(self$query[[rep(2L,self$depth)]]) # child
+        }
+      }, error = function(e) e)
+      if(is.null(r)) browser()
+      if("error" %in% (r)) browser()
+      r
     },
     apply.DTQ.seq.depth = function(seq, depth){
-      # update btq class object for higher level data from DTQ class
+      # update dtq class object for higher level data from DTQ class
       self$DTQ_seq <- seq
       self$DTQ_depth <- depth
       invisible(self)
     },
     apply.DTQ.rows = function(in_rows, out_rows){
-      # update btq class object for higher level data from DTQ class
+      # update dtq class object for higher level data from DTQ class
       self$DTQ_in_rows <- in_rows
       self$DTQ_out_rows <- out_rows
       invisible(self)
@@ -243,3 +254,8 @@ deparse.dtq.call <- function(x){
   query.list <- lapply(args.list, function(args) vapply(names(args), deparse_and_paste_arg, "", args, USE.NAMES=FALSE))
   lapply(query.list, function(query) paste0("[",paste(query,collapse=", "),"]"))
 }
+
+#' @title deparse object to character
+#' @param x object to deparse
+#' @return character scalar
+deparse_char <- function(x) paste(deparse(x, width.cutoff = 500L), collapse="\n")

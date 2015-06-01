@@ -26,6 +26,7 @@ test_that("dtl chain expected data types", {
   expected_r <- structure(c("integer", "character", "character", "integer", "character", "double", "double", "integer", "integer"),
                           .Names = c("dtq_id", "env", "src", "dtq_depth", "query", "timestamp", "elapsed", "in_rows", "out_rows"))
   expect_identical(sapply(dtl(chain=TRUE), typeof), expected_r, info="chain aggregation output column types")
+  expect_identical(dtl(chain=TRUE)$query, c("[j = .(a = sum(a)), by = b][i = a > median(a), j = .(a, b, z = b + a)]","[][][]"), info="chain aggregation output query")
   dtl(purge=TRUE)
   expect_identical(sapply(dtl(chain=TRUE), typeof), expected_r, info="empty chain aggregation output column types")
   
