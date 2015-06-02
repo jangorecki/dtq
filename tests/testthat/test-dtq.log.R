@@ -170,7 +170,19 @@ test_that("dtq.log process method", {
   expect_identical(.DTQ$length(), 2L, info="subset data.table-function to function-data.table, length")
   expect_identical(.DTQ$process()$query, c("[i = 2:3, j = z]", "[i = f()[2:3, z]]"), info="subset data.table-function to function-data.table, query")
   expect_identical(.DTQ$process()$src, c("f()","data.table(a = 1:4, b = letters[1:4])"), info="subset data.table-function to function-data.table, src")
+  dtl(purge=TRUE)
+  g <- function(seq) data.table(z = seq)
+  data.table(a=1:4, b=letters[1:4])[g(1:5)[2:3, z]]
+  expect_identical(.DTQ$length(), 2L, info="subset data.table-function to function-data.table, length")
+  expect_identical(.DTQ$process()$query, c("[i = 2:3, j = z]", "[i = g(1:5)[2:3, z]]"), info="subset data.table-function to function-data.table, query")
+  expect_identical(.DTQ$process()$src, c("g(1:5)","data.table(a = 1:4, b = letters[1:4])"), info="subset data.table-function to function-data.table, src")
   
+  # TO DO check NA
+  # options("dtq.debug" = TRUE)
+  # dtl(purge=TRUE)
+  # tables(silent = TRUE)[, NAME]
+  # .DTQ$process()
+
 })
 
 test_that("dtq.log timing", {

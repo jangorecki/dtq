@@ -150,6 +150,7 @@ dtq <- R6Class(
       self$query <- self$decall(self$call)
       self$depth <- self$get.depth()
       self$src <- self$get.src()
+      if(getOption("dtq.debug") && any(is.null(self$src), "error" %in% class(self$src), is.na(self$src))) browser()
       invisible(self)
     },
     length = function(){
@@ -169,16 +170,19 @@ dtq <- R6Class(
           if(is.name(parent)){
             deparse_char(parent) # parent
           } else if(is.call(parent)){
-            deparse_char(self$query[[rep(2L,self$depth-2L)]]) # grand parent # closes #5
+            grand_parent <- self$query[[rep(2L,self$depth-2L)]]
+            if(!grand_parent[[1L]]==as.symbol("[.data.table")){
+              deparse_char(grand_parent) # grand parent # closes #5
+            } else {
+              deparse_char(parent) 
+            }
           } else {
             deparse_char(self$query[[rep(2L,self$depth)]]) # child
           }
         } else {
           deparse_char(self$query[[rep(2L,self$depth)]]) # child
         }
-      }, error = function(e) e)
-      if(is.null(r)) browser()
-      if("error" %in% (r)) browser()
+      }, error = function(e) NA_character_)
       r
     },
     apply.DTQ.seq.depth = function(seq, depth){

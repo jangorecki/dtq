@@ -52,6 +52,7 @@
   options("dtq.log.nano" = TRUE) # if microbenchmark available it will use get_nanotime
   options("dtq.log.exclude" = character()) # packages to exclude
   options("dtq.log.include" = character()) # packages to include
+  options("dtq.debug" = FALSE) # can be used for easy dev of pkg nested functions
   
   # dtq processing opts
   
