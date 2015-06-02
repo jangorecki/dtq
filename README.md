@@ -1,6 +1,6 @@
 # data.table query [![Build Status](https://travis-ci.org/jangorecki/dtq.svg?branch=master)](https://travis-ci.org/jangorecki/dtq)
 
-**Current version:** [0.1.9.3](NEWS.md)  
+**Current version:** [0.1.9.4](NEWS.md)  
 
 - [x] log data.table query details
   - [x] call

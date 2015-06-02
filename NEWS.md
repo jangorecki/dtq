@@ -1,9 +1,10 @@
-# dtq 0.1.9.3
+# dtq 0.1.9.4
 
 - [x] added source name to `dtl(chain=TRUE)` clean up use cases
 - [x] removed redundant function
-- [x] more unit tests
+- [x] a lot of unit tests
 - [x] edge cases correct deparsing
+- [x] precise chain depth
 
 
 # dtq 0.1.9.2
