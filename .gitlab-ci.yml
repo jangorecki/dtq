@@ -1,0 +1,52 @@
+variables:
+  USERNS: "https://jangorecki.gitlab.io" # user namespace for local fork drat install string
+
+stages:
+  - test
+  - deploy
+
+test:
+  stage: test
+  image: docker.io/jangorecki/r-pkg
+  script:
+    # install deps
+    - Rscript -e 'install.packages(c("R6","data.table"), repos=c("https://cran.rstudio.com","https://Rdatatable.github.io/data.table"))'
+    # install suggests including cascades
+    - Rscript -e 'install.packages(c("microbenchmarkCore","knitr"), repos=paste0("https://", c("cran.rstudio.com","olafmersmann.github.io/drat")))'
+    # build pkg
+    - R CMD build .
+    # run check
+    - R CMD check $(ls -1t *.tar.gz | head -n 1) --no-manual --as-cran
+    # produce artifacts
+    - Rscript -e 'drat::insertArtifacts(repodir="public", repo.url="'"$USERNS"'/dtq", repo.cran=TRUE, log.files=c())'
+  artifacts:
+    paths:
+      - public
+
+test-r-3.2.0:
+  stage: test
+  image: r320 # devel #docker.io/jangorecki/r-3.2.0
+  script:
+    # install deps
+    - R3script -e 'install.packages(c("R6","data.table"), repos=c("https://cran.rstudio.com","https://Rdatatable.github.io/data.table"))'
+    # build package
+    - R3 CMD build . --no-build-vignettes
+    # run check
+    - export _R_CHECK_CRAN_INCOMING_=FALSE
+    - export _R_CHECK_FORCE_SUGGESTS_=FALSE
+    - R3 CMD check $(ls -1t *.tar.gz | head -n 1) --no-manual --as-cran --no-build-vignettes
+    # produce artifacts
+    - R3script -e 'install.packages("drat", repos="https://jangorecki.gitlab.io/drat")'
+    - R3script -e 'drat::insertArtifacts(repodir="public/r-3.2.0", repo.url="'"$USERNS"'/dtq/r-3.2.0", repo.cran=TRUE, log.files=c())'
+  artifacts:
+    paths:
+      - public
+
+.pages:
+  stage: deploy
+  image: docker.io/alpine
+  script:
+    - ls -lR public
+  artifacts:
+    paths:
+      - public
