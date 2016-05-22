@@ -1,3 +1,12 @@
+# dtq 0.1.9.5
+
+- [x] make suggested deps lighweight
+  - [x] move data.table from Depends to Imports
+  - [x] change microbenchmark to microbenchmarkCore
+  - [x] remove testthat
+- [x] setup GitLab CI
+
+
 # dtq 0.1.9.4
 
 - [x] added source name to `dtl(chain=TRUE)` clean up use cases

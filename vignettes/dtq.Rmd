@@ -26,6 +26,7 @@ invisible(dtl(purge=TRUE))
 ## Log query details
 
 ```{r dtl, message=FALSE}
+library(data.table)
 library(dtq)
 packageVersion("dtq")
 

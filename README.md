@@ -1,6 +1,6 @@
-# data.table query [![Build Status](https://travis-ci.org/jangorecki/dtq.svg?branch=master)](https://travis-ci.org/jangorecki/dtq)
+# dtq: data.table query [![Build Status](https://gitlab.com/jangorecki/dtq/badges/master/build.svg)](https://gitlab.com/jangorecki/dtq/builds)
 
-**Current version:** [0.1.9.4](NEWS.md)  
+**Current version:** [0.1.9.5](NEWS.md)  
 
 - [x] log data.table query details
   - [x] call
@@ -18,8 +18,7 @@
 
 ```r
 stopifnot(getRversion() >= "3.2.0")
-library(devtools)
-install_github("jangorecki/dtq")
+install.packages("dtq", repos=c("https://jangorecki.gitlab.io/dtq", "https://cran.rstudio.com"))
 ```
 
 ## Usage
@@ -27,6 +26,7 @@ install_github("jangorecki/dtq")
 See [vignette](https://rawgit.com/jangorecki/b917a9f9a33fb98b714d/raw/9a3a17995c33bc9932f1d8b8719f5188cbc12ca4/dtq.html).  
 
 ```r
+library(data.table)
 library(dtq)
 DT <- data.table(a = 1:10, b = letters[1:5])
 LKP <- data.table(b = letters[1:5], ratio = rnorm(5), key = "b")
@@ -48,7 +48,3 @@ While using *include* option character `R_GlobalEnv` can be provided to log also
 ## License
 
 GPL-3  
-
-## Contact
-
-`J.Gorecki@wit.edu.pl`

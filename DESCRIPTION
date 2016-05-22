@@ -1,7 +1,7 @@
 Package: dtq
 Type: Package
 Title: data.table query
-Version: 0.1.9.4
+Version: 0.1.9.5
 Date: 2016-05-22
 Author: Jan Gorecki
 Maintainer: Jan Gorecki <J.Gorecki@wit.edu.pl>
@@ -11,4 +11,5 @@ Depends: R (>= 3.2.0)
 Imports: data.table (>= 1.9.5), R6
 Enhances: microbenchmarkCore
 Suggests: knitr
+Additional_repositories: https://olafmersmann.github.io/drat
 VignetteBuilder: knitr

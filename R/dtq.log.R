@@ -5,7 +5,7 @@
 #' @details \emph{timestamp} represents the time of query (or chain) log after it is evaluated.
 #' @export
 dtl <- function(print = FALSE, chain = FALSE, purge = FALSE){
-  src <- env <- dtq_id <- . <- query <- elapsed <- in_rows <- out_rows <- NULL
+  src <- env <- dtq_id <- . <- query <- elapsed <- in_rows <- out_rows <- timestamp <- NULL
   if(isTRUE(purge)){
     dt <- .DTQ$purge()$empty
   } else {
