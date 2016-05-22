@@ -8,7 +8,7 @@ Maintainer: Jan Gorecki <J.Gorecki@wit.edu.pl>
 Description: Log details of data.table queries, read-only feature.
 License: GPL-3
 Depends: R (>= 3.2.0)
-Imports: data.table (>= 1.9.5), R6
+Imports: data.table (>= 1.9.6), R6
 Enhances: microbenchmarkCore
 Suggests: knitr
 Additional_repositories: https://olafmersmann.github.io/drat
