@@ -30,7 +30,7 @@ test-r-3.2.0:
     # install deps
     - R3script -e 'install.packages(c("R6","data.table"), repos="https://cran.rstudio.com", method="curl")'
     # install suggests
-    - Rscript -e 'install.packages(c("microbenchmarkCore","knitr"), repos=c("https://cran.rstudio.com","https://olafmersmann.github.io/drat"), method="curl")'
+    - R3script -e 'install.packages(c("microbenchmarkCore","knitr"), repos=c("https://cran.rstudio.com","https://olafmersmann.github.io/drat"), method="curl")'
     # build package
     - R3 CMD build . --no-build-vignettes
     # run check
