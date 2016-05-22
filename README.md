@@ -23,7 +23,7 @@ install.packages("dtq", repos=c("https://jangorecki.gitlab.io/dtq", "https://cra
 
 ## Usage
 
-See [vignette](https://rawgit.com/jangorecki/b917a9f9a33fb98b714d/raw/9a3a17995c33bc9932f1d8b8719f5188cbc12ca4/dtq.html).  
+See [vignette](https://jangorecki.gitlab.io/dtq/library/dtq/doc/dtq.html).  
 
 ```r
 library(data.table)

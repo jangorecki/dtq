@@ -89,8 +89,9 @@ print(DT)
   
 DT <- data.table(a = 1L)
 setattr(DT,"read.only",TRUE)
-DT[, a := 2L]
+DT2 <- DT[, a := 2L]
 print(DT)
+print(DT2)
 
 knitr::kable(dtl(print=TRUE))
 ```
